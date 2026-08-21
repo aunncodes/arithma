@@ -5,15 +5,27 @@ import sympy
 from .pretty import pretty
 
 
-def output(value, use_pretty=True):
-    if hasattr(value, "arithma_function"):
-        output_function(value, use_pretty)
-        return
+def output(values, use_pretty=True):
+    text = []
 
-    if use_pretty:
-        print(pretty(value))
-    else:
-        print(sympy.sstr(value))
+    for value in values:
+        if hasattr(value, "arithma_function"):
+            if text:
+                print(" ".join(text))
+                text = []
+
+            output_function(value, use_pretty)
+            continue
+
+        if isinstance(value, str):
+            text.append(value)
+        elif use_pretty:
+            text.append(pretty(value))
+        else:
+            text.append(sympy.sstr(value))
+
+    if text:
+        print(" ".join(text))
 
 
 def output_function(function, use_pretty=True):

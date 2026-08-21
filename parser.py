@@ -3,6 +3,11 @@ class Number:
         self.value = value
 
 
+class String:
+    def __init__(self, value):
+        self.value = value
+
+
 class Name:
     def __init__(self, value):
         self.value = value
@@ -138,6 +143,9 @@ class Parser:
     def primary(self):
         if self.match("NUMBER"):
             return Number(self.previous().value)
+
+        if self.match("STRING"):
+            return String(self.previous().value)
 
         if self.match("NAME"):
             name = self.previous().value

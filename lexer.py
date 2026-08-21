@@ -47,6 +47,10 @@ class Lexer:
                 self.skip_comment()
                 continue
 
+            if char == '"':
+                tokens.append(self.read_string())
+                continue
+
             if char.isdigit() or char == ".":
                 tokens.append(self.read_number())
                 continue
@@ -73,6 +77,48 @@ class Lexer:
 
         tokens.append(Token("EOF", "", self.line, self.column))
         return tokens
+
+    def read_string(self):
+        start_line = self.line
+        start_column = self.column
+        self.advance()
+        value = ""
+
+        while self.position < len(self.source):
+            char = self.source[self.position]
+
+            if char == '"':
+                self.advance()
+                return Token("STRING", value, start_line, start_column)
+
+            if char == "\n":
+                raise SyntaxError(
+                    f"String was not closed at line {start_line}, column {start_column}"
+                )
+
+            if char == "\\":
+                self.advance()
+
+                if self.position >= len(self.source):
+                    break
+
+                escaped = self.source[self.position]
+                escapes = {
+                    '"': '"',
+                    "\\": "\\",
+                    "n": "\n",
+                    "t": "\t",
+                }
+                value += escapes.get(escaped, escaped)
+                self.advance()
+                continue
+
+            value += char
+            self.advance()
+
+        raise SyntaxError(
+            f"String was not closed at line {start_line}, column {start_column}"
+        )
 
     def read_number(self):
         start = self.position
@@ -115,7 +161,6 @@ class Lexer:
             self.advance()
 
         value = self.source[start:self.position]
-
         return Token("NAME", value, self.line, start_column)
 
     def skip_comment(self):

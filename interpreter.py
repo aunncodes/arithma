@@ -1,7 +1,7 @@
 import sympy
 
 from functions import constants, functions, output
-from parser import Assignment, Binary, Call, ExpressionStatement, FunctionDefinition, Name, Number, Unary
+from parser import Assignment, Binary, Call, ExpressionStatement, FunctionDefinition, Name, Number, String, Unary
 
 
 class ArithmaFunction:
@@ -28,7 +28,12 @@ class Interpreter:
 
     def execute(self, statement):
         if isinstance(statement, Assignment):
-            self.variables[statement.name] = self.evaluate(statement.value)
+            value = self.evaluate(statement.value)
+
+            if isinstance(value, str):
+                raise TypeError("Strings can only be used inside output()")
+
+            self.variables[statement.name] = value
             return
 
         if isinstance(statement, FunctionDefinition):
@@ -38,6 +43,9 @@ class Interpreter:
             self.variables[statement.parameter] = symbol
 
             body = self.evaluate(statement.body)
+
+            if isinstance(body, str):
+                raise TypeError("Strings can only be used inside output()")
 
             if old_value is None:
                 del self.variables[statement.parameter]
@@ -53,7 +61,11 @@ class Interpreter:
             return
 
         if isinstance(statement, ExpressionStatement):
-            self.evaluate(statement.expression)
+            value = self.evaluate(statement.expression)
+
+            if isinstance(value, str):
+                raise TypeError("Strings can only be used inside output()")
+
             return
 
         raise TypeError(f"Unknown statement type: {type(statement).__name__}")
@@ -65,7 +77,16 @@ class Interpreter:
 
             return sympy.Integer(expression.value)
 
+        if isinstance(expression, String):
+            return expression.value
+
         if isinstance(expression, Name):
+            if expression.value == "true":
+                return True
+
+            if expression.value == "false":
+                return False
+
             if expression.value in self.variables:
                 return self.variables[expression.value]
 
@@ -79,6 +100,7 @@ class Interpreter:
 
         if isinstance(expression, Unary):
             value = self.evaluate(expression.value)
+            self.reject_string(value)
 
             if expression.operator == "+":
                 return value
@@ -89,6 +111,7 @@ class Interpreter:
         if isinstance(expression, Binary):
             left = self.evaluate(expression.left)
             right = self.evaluate(expression.right)
+            self.reject_string(left, right)
 
             if expression.operator == "+":
                 return left + right
@@ -109,18 +132,19 @@ class Interpreter:
             arguments = [self.evaluate(argument) for argument in expression.arguments]
 
             if expression.name == "output":
-                if len(arguments) not in (1, 2):
-                    raise TypeError("output() expects a value and optional boolean")
+                if not arguments:
+                    print()
+                    return None
 
                 use_pretty = True
 
-                if len(arguments) == 2:
-                    if not isinstance(arguments[1], bool):
-                        raise TypeError("output() second value must be true or false")
-                    use_pretty = arguments[1]
+                if len(arguments) > 1 and isinstance(arguments[-1], bool):
+                    use_pretty = arguments.pop()
 
-                output(arguments[0], use_pretty)
-                return arguments[0]
+                output(arguments, use_pretty)
+                return arguments[-1] if arguments else None
+
+            self.reject_string(*arguments)
 
             if expression.name in functions:
                 return functions[expression.name](*arguments)
@@ -147,3 +171,7 @@ class Interpreter:
             raise NameError(f"Unknown function '{expression.name}'")
 
         raise TypeError(f"Unknown expression type: {type(expression).__name__}")
+
+    def reject_string(self, *values):
+        if any(isinstance(value, str) for value in values):
+            raise TypeError("Strings can only be used inside output()")

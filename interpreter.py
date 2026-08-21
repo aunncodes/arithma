@@ -1,7 +1,7 @@
 import sympy
 
 from functions import constants, functions, output
-from parser import Binary, Call, ExpressionStatement, FunctionDefinition, Let, Name, Number, Unary
+from parser import Assignment, Binary, Call, ExpressionStatement, FunctionDefinition, Name, Number, Unary
 
 
 class ArithmaFunction:
@@ -27,7 +27,7 @@ class Interpreter:
             self.execute(statement)
 
     def execute(self, statement):
-        if isinstance(statement, Let):
+        if isinstance(statement, Assignment):
             self.variables[statement.name] = self.evaluate(statement.value)
             return
 
@@ -109,10 +109,17 @@ class Interpreter:
             arguments = [self.evaluate(argument) for argument in expression.arguments]
 
             if expression.name == "output":
-                if len(arguments) != 1:
-                    raise TypeError("output() expects exactly one value")
+                if len(arguments) not in (1, 2):
+                    raise TypeError("output() expects a value and optional boolean")
 
-                output(arguments[0])
+                use_pretty = True
+
+                if len(arguments) == 2:
+                    if not isinstance(arguments[1], bool):
+                        raise TypeError("output() second value must be true or false")
+                    use_pretty = arguments[1]
+
+                output(arguments[0], use_pretty)
                 return arguments[0]
 
             if expression.name in functions:
@@ -127,6 +134,15 @@ class Interpreter:
                     )
 
                 return function.call(arguments[0])
+
+            if expression.name in self.variables or expression.name in constants:
+                if len(arguments) != 1:
+                    raise TypeError(
+                        f"{expression.name}(...) can only be used as multiplication with one value"
+                    )
+
+                left = self.evaluate(Name(expression.name))
+                return left * arguments[0]
 
             raise NameError(f"Unknown function '{expression.name}'")
 

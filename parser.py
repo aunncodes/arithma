@@ -27,7 +27,7 @@ class Call:
         self.arguments = arguments
 
 
-class Let:
+class Assignment:
     def __init__(self, name, value):
         self.name = name
         self.value = value
@@ -67,18 +67,18 @@ class Parser:
         return statements
 
     def statement(self):
-        if self.match("LET"):
-            return self.let_statement()
-
         if self.looks_like_function_definition():
             return self.function_definition()
 
+        if self.check("NAME") and self.peek(1).type == "EQUALS":
+            return self.assignment()
+
         return ExpressionStatement(self.expression())
 
-    def let_statement(self):
-        name = self.consume("NAME", "Expected a variable name after 'let'")
+    def assignment(self):
+        name = self.consume("NAME", "Expected a variable name")
         self.consume("EQUALS", "Expected '=' after the variable name")
-        return Let(name.value, self.expression())
+        return Assignment(name.value, self.expression())
 
     def function_definition(self):
         name = self.consume("NAME", "Expected a function name")

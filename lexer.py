@@ -116,9 +116,6 @@ class Lexer:
 
         value = self.source[start:self.position]
 
-        if value == "let":
-            return Token("LET", value, self.line, start_column)
-
         return Token("NAME", value, self.line, start_column)
 
     def skip_comment(self):

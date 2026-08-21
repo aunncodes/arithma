@@ -5,7 +5,7 @@ A math-focused programming language.
 ## Current syntax
 
 ```
-let x = 5
+x = 5
 
 f(x) = x^2 + 2x + 1
 

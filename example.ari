@@ -1,7 +1,7 @@
-# Arithma
+# Arithma v0
 
-let radius = 4
-let area = pi * radius^2
+radius = 4
+area = pi * radius^2
 
 output(area)
 

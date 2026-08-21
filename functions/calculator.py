@@ -13,4 +13,6 @@ functions = {
 constants = {
     "pi": sympy.pi,
     "e": sympy.E,
+    "true": True,
+    "false": False,
 }

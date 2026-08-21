@@ -1,0 +1,14 @@
+# Arithma
+
+let radius = 4
+let area = pi * radius^2
+
+output(area)
+
+f(x) = x^2 + 2x - 3
+
+output(f(5))
+output(f)
+
+output(square_root(81))
+output(sine(pi / 2))
